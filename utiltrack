@@ -1,0 +1,42 @@
+kecilin range waktu jadi sebulan
+ malah jadi semua data
+ cek tgls per satelit udah bener
+ balikin lagi setahun
+ ketauan TglR=[]; bukan itu var global gak jadi global
+ diganti jadi TglR=[TglS, TglE];
+ ketemu nya di ImgCol(Point,'','S2k') '' jadinya keambil semua ambil dari TglR=[TglS, TglE]
+ // Selected Date TglS TglE di bawah naikin ke atas
+SH_Sri ganti point rentang + map.setcenter zoom20
+SH_Sri_Poly ubah jadi rect_di_rentang
+ilangin set map
+ sub district
+ street
+ grid
+ Tseries
+ buffer
+ titik
+setmap false ,0
+masi lama
+kurangin logo
+ malah abis semua
+munculin kotak rentang; ;iat Set_Map Max nya; 13  lanjut ke 14 kepake batasadmin so take 15
+kotak rentang gak muncul di set 15 ganti ke shp; gak usah mungkin 
+karena kedikitan tambahin tglS jadi pre 6 bulan
+
+
+masukin fungsi Pil_Prv.onChange untuk ngubah point + outline batas provinsi ke 
+ 1Pil_Bound.onChange; mungkin jadi Pil_Bound.onChange bru Pil_Prv.onChange
+ idx di Pil_Prv jadi idxpilprv gak bisa keluar, dibalik kembali ke awal Pil_Bound masukin ke Pil_Prv
+ Cek ada dua? kalo Pil_prov belom diisi Pil_Bound gak bekerja kecuali Pil_Prov, ilangin aja pil bound nya? atau buat dua
+ kalo pilih prov lain map ke dobel set_map nya taro dalem sini
+ 2Btn_Repro.onClick
+ masukin ke dalem pil_prov dan ganti point ke kumpulan titik batas
+ clear map!
+ TB_Point = ui.Textbox({value: 'Lon, Lat'});
+ ilangin aja pil bound nya? iya pilihan fokus studi taro di pil_prov
+ ubah pil bound jadi label koordinat
+ Point_Gab_Nam jadi Admin Prov Doang gak bisa tapi onCHange nya juga berubah
+ item fokus studi lanjutan taro di list prv items:Arr_NamPrv
+ nope jadiin point = batas provinsi jadi variable global
+
+

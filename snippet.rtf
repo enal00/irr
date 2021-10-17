@@ -1,0 +1,162 @@
+{\rtf1\ansi\deff0{\fonttbl{\f0\fmodern\fprq1\fcharset0;}}{\colortbl;\red170\green34\blue255;\red187\green102\blue34;\red160\green0\blue0;\red64\green128\blue128;\red0\green0\blue255;\red0\green128\blue0;\red0\green0\blue128;\red102\green102\blue102;\red210\green65\blue58;\red25\green23\blue124;\red0\green68\blue221;\red187\green102\blue136;\red255\green0\blue0;\red186\green33\blue33;\red153\green153\blue153;\red160\green160\blue0;\red136\green136\blue136;\red187\green187\blue187;\red188\green122\blue0;\red128\green0\blue128;\red136\green0\blue0;\red176\green0\blue64;\red0\green160\blue0;\red125\green144\blue41;}\f0Set_Map({\cf8 2},S2.map(CMsk.CMsk_S2K).median().select(CMsk.Bnd_Optis()).clip(rect_di_rentang),VisRGB_NCC_Mos,{\cf14 'RGB NCC S2 Mosaik '} {\cf8 +} TglS_S2 {\cf8 +} {\cf14 ' to '} {\cf8 +} TglE_S2);\par
+\par
+{\chbrdr\chcfpat13 #}S2\par
+S2{\cf8 =}Data_S2.Data\par
+\par
+{\chbrdr\chcfpat13 #}Data_S2\par
+Data_S2{\cf8 =}ImgCol(Point,TglR,{\cf14 'S2k'})\par
+Point {\cf8 =} ee.Geometry.Point([{\cf8 1108.2871},{\cf8 -}{\cf8 6.4691}]);{\cf4\i //rect_di_rentang\par
+}TglR {\cf8 =} [{\cf8 2020}{\cf8 -}{\cf8 10}{\cf8 -}{\cf8 15},{\cf8 2021}{\cf8 -}{\cf8 10}{\cf8 -}{\cf8 15}]{\cf4\i //input GUI long lat] //.filterDate(Tgl_R[0],Tgl_R[1])\par
+}Img_Id{\cf8 =}{\cf14 'COPERNICUS/S2_SR'};\par
+\par
+{\chbrdr\chcfpat13 #}CMsk.CMsk_S2K {\cf4\i //SCL yang nilainya di luar 4:Veg, 5:Bare, 6:Water; 7 :Unclas jadi nol  (mask) 4-7 >> 1\par
+}exports.CMsk_S2K {\cf8 =} {\cf6\b function}(image) \{ {\cf4\i // untuk S2_SR mengggunakan band SCL (Level 2A)\par
+}  {\cf6\b var} qa {\cf8 =} image.select({\cf14 'SCL'}); {\cf4\i // 4:Veg, 5:Bare, 6:Water; 7 :Unclas\par
+}  {\cf6\b var} mask {\cf8 =} qa.expression({\cf14 '(qa <= 3 || qa > 7) ? 0:1'},\{qa{\cf8 :}qa\});\par
+  {\cf6\b return} image.updateMask(mask)  \par
+  .copyProperties(image, [{\cf14 "system:index"}, {\cf14 "system:time_start"},{\cf14 "system:time_end"}]);\par
+\par
+exports.CMsk_S2 {\cf8 =} {\cf6\b function}(image) \{ {\cf4\i // untuk S2 mengggunakan band QA60 (Level 1C)\par
+}  {\cf6\b var} qa {\cf8 =} image.select({\cf14 'QA60'}); {\cf4\i // QA 60 m ; Bayangan awan blm ada\par
+}  \par
+  {\cf6\b var} cloudBitMask {\cf8 =} {\cf8 1} {\cf8 <<} {\cf8 10};\par
+  {\cf6\b var} cirrusBitMask {\cf8 =} {\cf8 1} {\cf8 <<} {\cf8 11};\par
+  {\cf6\b var} mask {\cf8 =} qa.bitwiseAnd(cloudBitMask).eq({\cf8 0})\par
+      .and(qa.bitwiseAnd(cirrusBitMask).eq({\cf8 0}));\par
+  {\cf6\b return} image.updateMask(mask).divide(Scld).select(BndS2a,Ren_BndS2)\par
+  .copyProperties(image, [{\cf14 "system:index"}, {\cf14 "system:time_start"},{\cf14 "system:time_end"}]);\par
+\}\par
+\par
+{\chbrdr\chcfpat13 #}Div10K_S2k\par
+{\cf6\b function} Div10K_S2k(image) \{\par
+  {\cf6\b var} opticalBands {\cf8 =} image.select({\cf14 'B.*'}).divide({\cf8 10000}).toFloat();\par
+  {\cf6\b return} image.addBands(opticalBands, {\cf6\b null}, {\cf6\b true})\par
+\par
+{\chbrdr\chcfpat13 #}RenBndS2\par
+exports.RenBndS2 {\cf8 =} {\cf6\b function}(Img) \{\par
+  {\cf6\b return} Img.select(BndS2a,Ren_BndS2);\par
+BndS2a {\cf8 =} [{\cf14 'B1'},{\cf14 'B2'},{\cf14 'B3'}, {\cf14 'B4'},{\cf14 'B5'},{\cf14 'B6'}, {\cf14 'B7'},{\cf14 'B8A'},{\cf14 'B8'}, {\cf14 'B11'},{\cf14 'B12'},{\cf14 'SCL'}];\par
+Ren_BndS2 {\cf8 =} [{\cf14 'UBlue'},{\cf14 'Blue'},{\cf14 'Green'}, {\cf14 'Red'},{\cf14 'RdE1'},{\cf14 'RdE2'},{\cf14 'RdE3'},{\cf14 'RdE4'}, {\cf14 'Nir'},{\cf14 'Swir1'},{\cf14 'Swir2'},{\cf14 'SCL'}]\par
+\par
+{\chbrdr\chcfpat13 #}AddBands_Idx\par
+{\cf6\b function} AddBands_Idx(image)\{ {\cf4\i // Index EVI,NDWI,NDBI   \par
+}  {\cf6\b var} ndvi {\cf8 =} image.normalizedDifference([{\cf14 'Nir'}, {\cf14 'Red'}]).rename({\cf14 'NDVI'}).toFloat();\par
+  {\cf6\b var} ndwi {\cf8 =} image.normalizedDifference([{\cf14 'Green'}, {\cf14 'Swir2'}]).rename({\cf14 'NDWI'}).toFloat();\par
+  {\cf6\b var} mndwi {\cf8 =} image.normalizedDifference([{\cf14 'Green'}, {\cf14 'Swir1'}]).rename({\cf14 'MNDWI'}).toFloat();\par
+  {\cf6\b var} ndbi {\cf8 =} image.normalizedDifference([{\cf14 'Swir1'}, {\cf14 'Nir'}]).rename({\cf14 'NDBI'}).toFloat();\par
+  {\cf6\b var} evi {\cf8 =} image.expression({\cf14 "(RED < NIR || BLUE < RED) ? L*2.5*((NIR-RED)/(L+NIR+6*RED-7.5*BLUE))"}{\cf8 +}\par
+  {\cf14 ":L*1.5*((NIR-RED)/(L/2+NIR+RED))"}\par
+    ,\{NIR{\cf8 :} image.select({\cf14 'Nir'}),RED{\cf8 :} image.select({\cf14 'Red'}),BLUE{\cf8 :} image.select({\cf14 'Blue'}),L{\cf8 :} {\cf8 1}\}).rename({\cf14 'EVI'}).toFloat();\par
+  {\cf6\b var} Msk {\cf8 =} ndvi.expression({\cf14 '(vi <= -1.0 || vi >= 1.0 || iv <= -1.0 || iv >= 1.0) ? 0:1'},\{vi{\cf8 :}ndvi,iv{\cf8 :}evi\});\par
+ {\cf4\i // var bui = ndbi.subtract(evi).rename('BUI');\par
+}  {\cf6\b return} image.addBands(ndbi).addBands(evi).addBands(ndwi).addBands(ndvi).addBands(mndwi).updateMask(Msk); \par
+ \}\par
+\par
+\par
+{\chbrdr\chcfpat13 #}Median\par
+ee.ImageCollection.median()\par
+{\chbrdr\chcfpat13 #}CMsk.Bnd_Optis()\par
+Bnd_Optis {\cf8 =} JumArr(BndSpc,Bnd_Idx);\par
+ {\cf6\b function} JumArr(Arr1,Arr2) \{\par
+   {\cf6\b return} (Arr1 {\cf8 +} {\cf14 ','} {\cf8 +} Arr2).split({\cf14 ','});\par
+BndSpc{\cf8 =}[{\cf14 'UBlue'},{\cf14 'Blue'},{\cf14 'Green'},{\cf14 'Red'},{\cf14 'Nir'},{\cf14 'Swir1'},{\cf14 'Swir2'}]\par
+Bnd_Idx {\cf8 =} [{\cf14 'NDBI'},{\cf14 'EVI'},{\cf14 'NDWI'}]\par
+\par
+{\chbrdr\chcfpat13 #}Clipping\par
+Img.clip(rect_di_rentang)\par
+{\chbrdr\chcfpat13 #}VisRGB_NCC_Mos\par
+VisRGB_NCC_Mos {\cf8 =} \{min{\cf8 :}[{\cf8 0.05},{\cf8 0.03},{\cf8 0.05}],max{\cf8 :}[{\cf8 0.28},{\cf8 0.34},{\cf8 0.14}],bands{\cf8 :}[{\cf14 'Swir1'},{\cf14 'Nir'},{\cf14 'Green'}] \};\par
+\par
+{\chbrdr\chcfpat13 #}ImgCol\par
+{\cf6\b function} ImgCol(Bounds,Tgl_R,Opsi) \{\par
+  {\cf6\b var} JumLst,LstImgs,LstTgl,Data,Img_Id;\par
+  {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'S2k'})Img_Id{\cf8 =}{\cf14 'COPERNICUS/S2_SR'};\par
+  {\cf6\b else} {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'L8'})Img_Id{\cf8 =}{\cf14 'LANDSAT/LC08/C02/T1_L2'};\par
+  {\cf6\b else} {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'S1'})Img_Id{\cf8 =}{\cf14 'COPERNICUS/S1_GRD'};\par
+  {\cf6\b else} Img_Id {\cf8 =} Opsi;\par
+  Data{\cf8 =} ee.ImageCollection(Img_Id).filterBounds(Bounds);\par
+  {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'S2k'}) Data{\cf8 =}Data.map(Div10K_S2k).map(CMsk.RenBndS2).map(CMsk.AddBands_Idx);\par
+  {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'L8'}) Data{\cf8 =}Data.map(applyScaleFactors).map(CMsk.RenBndL8b).map(CMsk.AddBands_Idx);\par
+  {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'S1'}) Data{\cf8 =}S1_Indo.filterBounds(Bounds);\par
+  {\cf6\b if}(Tgl_R {\cf8 !==}{\cf14 ''} {\cf8 ||} Tgl_R  {\cf8 >} {\cf8 0} ) Data {\cf8 =} Data.filterDate(Tgl_R[{\cf8 0}],Tgl_R[{\cf8 1}]);  {\cf6\b else} Data {\cf8 =} Data;\par
+  Data {\cf8 =} Data.sort({\cf14 'system:time_start'}) ; JumLst {\cf8 =} JumEl(Data); LstImgs {\cf8 =} Lst_Imgs(Data);\par
+  {\cf6\b return} \{Data{\cf8 :}Data,JumLst{\cf8 :}JumLst,LstImgs{\cf8 :}LstImgs\};\par
+\}\par
+\par
+{\chbrdr\chcfpat13 #}Div10K_S2k\par
+{\cf6\b function} Div10K_S2k(image) \{\par
+  {\cf6\b var} opticalBands {\cf8 =} image.select({\cf14 'B.*'}).divide({\cf8 10000}).toFloat();\par
+  {\cf6\b return} image.addBands(opticalBands, {\cf6\b null}, {\cf6\b true})\par
+\par
+{\chbrdr\chcfpat13 #}RenBndS2\par
+exports.RenBndS2 {\cf8 =} {\cf6\b function}(Img) \{\par
+  {\cf6\b return} Img.select(BndS2a,Ren_BndS2);\par
+\par
+{\chbrdr\chcfpat13 #}BndS2a, Ren_BndS2 \par
+BndS2a {\cf8 =} [{\cf14 'B1'},{\cf14 'B2'},{\cf14 'B3'}, {\cf14 'B4'},{\cf14 'B5'},{\cf14 'B6'}, {\cf14 'B7'},{\cf14 'B8A'},{\cf14 'B8'}, {\cf14 'B11'},{\cf14 'B12'},{\cf14 'SCL'}];\par
+Ren_BndS2 {\cf8 =} [{\cf14 'UBlue'},{\cf14 'Blue'},{\cf14 'Green'}, {\cf14 'Red'},{\cf14 'RdE1'},{\cf14 'RdE2'},{\cf14 'RdE3'},{\cf14 'RdE4'}, {\cf14 'Nir'},{\cf14 'Swir1'},{\cf14 'Swir2'},{\cf14 'SCL'}],\par
+\par
+{\chbrdr\chcfpat13 #}AddBands_Idx\par
+{\cf6\b function} AddBands_Idx(image)\{ {\cf4\i // Index EVI,NDWI,NDBI   \par
+}  {\cf6\b var} ndvi {\cf8 =} image.normalizedDifference([{\cf14 'Nir'}, {\cf14 'Red'}]).rename({\cf14 'NDVI'}).toFloat();\par
+  {\cf6\b var} ndwi {\cf8 =} image.normalizedDifference([{\cf14 'Green'}, {\cf14 'Swir2'}]).rename({\cf14 'NDWI'}).toFloat();\par
+  {\cf6\b var} mndwi {\cf8 =} image.normalizedDifference([{\cf14 'Green'}, {\cf14 'Swir1'}]).rename({\cf14 'MNDWI'}).toFloat();\par
+  {\cf6\b var} ndbi {\cf8 =} image.normalizedDifference([{\cf14 'Swir1'}, {\cf14 'Nir'}]).rename({\cf14 'NDBI'}).toFloat();\par
+  {\cf6\b var} evi {\cf8 =} image.expression({\cf14 "(RED < NIR || BLUE < RED) ? L*2.5*((NIR-RED)/(L+NIR+6*RED-7.5*BLUE))"}{\cf8 +}\par
+  {\cf14 ":L*1.5*((NIR-RED)/(L/2+NIR+RED))"}\par
+    ,\{NIR{\cf8 :} image.select({\cf14 'Nir'}),RED{\cf8 :} image.select({\cf14 'Red'}),BLUE{\cf8 :} image.select({\cf14 'Blue'}),L{\cf8 :} {\cf8 1}\}).rename({\cf14 'EVI'}).toFloat();\par
+  {\cf6\b var} Msk {\cf8 =} ndvi.expression({\cf14 '(vi <= -1.0 || vi >= 1.0 || iv <= -1.0 || iv >= 1.0) ? 0:1'},\{vi{\cf8 :}ndvi,iv{\cf8 :}evi\});\par
+ {\cf4\i // var bui = ndbi.subtract(evi).rename('BUI');\par
+}  {\cf6\b return} image.addBands(ndbi).addBands(evi).addBands(ndwi).addBands(ndvi).addBands(mndwi).updateMask(Msk); \par
+ \}\par
+\par
+\par
+{\chbrdr\chcfpat13 #}Point\par
+Point {\cf8 =} SH_Sri_Point;\par
+Point {\cf8 =} ee.Geometry.Point([{\cf8 107.6352944},{\cf8 -}{\cf8 6.31700999}]);\par
+\par
+{\chbrdr\chcfpat13 #}SH_Sri_Point\par
+SH_Sri_Point {\cf8 =} Kords2Geom(SH_Sri_Kord,{\cf14 'Point'});\par
+SH_Sri_Point {\cf8 =} ee.Geometry.Point([{\cf8 107.6352944},{\cf8 -}{\cf8 6.31700999}]);\par
+\par
+{\chbrdr\chcfpat13 #}Kords2Geom\par
+{\cf6\b function} Kords2Geom(Kord,Opsi,Rad) \{\par
+    {\cf6\b var} Feat; {\cf6\b if}(Opsi{\cf8 ==} {\cf14 'Point'})Feat {\cf8 =} ee.Geometry.Point(Kord);\par
+    {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'Rec'})Feat {\cf8 =} ee.Geometry.Rectangle(Kord);\par
+    {\cf6\b if}(Opsi{\cf8 ==}{\cf14 'Buf'})Feat {\cf8 =} (ee.Geometry.Point(Kord)).buffer(Rad);\par
+    {\cf6\b return} Feat;\par
+  \}\par
+\par
+{\chbrdr\chcfpat13 #}SH_Sri_Kord\par
+SH_Sri_Kord{\cf8 =}[{\cf8 107.6352944},{\cf8 -}{\cf8 6.31700999}]\par
+\par
+{\chbrdr\chcfpat13 #}TglR\par
+TglR {\cf8 =} (TB_SD.getValue()).split({\cf14 ','});\par
+\par
+{\chbrdr\chcfpat13 #}TB_SD\par
+TB_SD {\cf8 =} TB_SD {\cf8 =} ui.Textbox\par
+\par
+\par
+{\cf6\b function} Set_Map(No,Obj,Vis,Ket,Opsi,Opac) \{\par
+{\cf6\b return} Map.layers().set(No, ui.Map.Layer(Obj, Vis,Ket,Opsi,Opac));\par
+\par
+{\chbrdr\chcfpat13 #}CMsk.CMsk_S2K {\cf4\i //SCL yang nilainya di luar 4:Veg, 5:Bare, 6:Water; 7 :Unclas jadi nol  (mask) 4-7 >> 1\par
+}exports.CMsk_S2K {\cf8 =} {\cf6\b function}(image) \{ {\cf4\i // untuk S2_SR mengggunakan band SCL (Level 2A)\par
+}  {\cf6\b var} qa {\cf8 =} image.select({\cf14 'SCL'}); {\cf4\i // 4:Veg, 5:Bare, 6:Water; 7 :Unclas\par
+}  {\cf6\b var} mask {\cf8 =} qa.expression({\cf14 '(qa <= 3 || qa > 7) ? 0:1'},\{qa{\cf8 :}qa\});\par
+  {\cf6\b return} image.updateMask(mask)  \par
+  .copyProperties(image, [{\cf14 "system:index"}, {\cf14 "system:time_start"},{\cf14 "system:time_end"}]);\par
+\}\par
+\par
+{\chbrdr\chcfpat13 #}CMsk.Bnd_Optis()\par
+Bnd_Optis {\cf8 =} JumArr(BndSpc,Bnd_Idx);\par
+ {\cf6\b function} JumArr(Arr1,Arr2) \{\par
+   {\cf6\b return} (Arr1 {\cf8 +} {\cf14 ','} {\cf8 +} Arr2).split({\cf14 ','});\par
+BndSpc{\cf8 =}[{\cf14 'UBlue'},{\cf14 'Blue'},{\cf14 'Green'},{\cf14 'Red'},{\cf14 'Nir'},{\cf14 'Swir1'},{\cf14 'Swir2'}]\par
+Bnd_Idx {\cf8 =} [{\cf14 'NDBI'},{\cf14 'EVI'},{\cf14 'NDWI'}]\par
+\par
+{\cf4\i //kok ada band optis di 'COPERNICUS/S2_SR'\par
+}\par
+{\chbrdr\chcfpat13 #}VisRGB_NCC_Mos\par
+VisRGB_NCC_Mos {\cf8 =} \{min{\cf8 :}[{\cf8 0.05},{\cf8 0.03},{\cf8 0.05}],max{\cf8 :}[{\cf8 0.28},{\cf8 0.34},{\cf8 0.14}],bands{\cf8 :}[{\cf14 'Swir1'},{\cf14 'Nir'},{\cf14 'Green'}] \};\par
+}
